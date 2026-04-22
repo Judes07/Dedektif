@@ -90,7 +90,8 @@
             
             <!-- Şifre Kutusu -->
             <!-- KONUM AYARI: 'top' (yukarıdan) ve 'left' (soldan) yüzdelerini buradan değiştirerek konumunu ayarlayabilirsiniz -->
-            <input type="text" id="maskedInput" placeholder="" 
+            <!-- DİKKAT: 'type' özelliği 'password' yerine 'text' yapıldı, sansürleme işlemini biz kontrol edeceğiz -->
+            <input type="text" id="password" placeholder="" 
                    class="interactive-el dynamic-text-input bg-[#c9b596] text-[#3e2723] border-2 border-[#5d4037] rounded-sm px-2 outline-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] font-mono font-bold tracking-widest text-center z-10"
                    style="top: 46.5%; left: 45%; transform: skewX(3deg); width: 20%; height: 3.2%;"
                    autocomplete="off">
@@ -105,33 +106,7 @@
             </button>
 
         </div>
-<script>
-    const inputField = document.getElementById('maskedInput');
-    let realValue = ""; // Gerçek veriyi hafızada tutuyoruz
 
-    inputField.addEventListener('input', function (e) {
-        // Eğer karakter silindiyse (backspace)
-        if (e.inputType === 'deleteContentBackward') {
-            realValue = realValue.slice(0, -1);
-        } else {
-            // Yeni harfi gerçek veriye ekle
-            realValue = e.target.value;
-        }
-
-        // Maskeleme mantığı
-        if (realValue.length > 1) {
-            // Son harf hariç hepsini * yap
-            let masked = "*".repeat(realValue.length - 1) + realValue.slice(-1);
-            inputField.value = masked;
-        } else {
-            // Tek harf varsa direkt göster
-            inputField.value = realValue;
-        }
-        
-        // Geliştirici için: Konsolda gerçek değeri görebilirsiniz
-        console.log("Gerçek Değer: " + realValue);
-    });
-</script>
         <!-- İçeri Girdikten Sonra Karşılaşılacak Ekran (Hoşgeldin Yazısı) -->
         <div id="welcome-text" class="absolute inset-0 bg-black text-white flex flex-col justify-center items-center opacity-0 pointer-events-none transition-opacity duration-1000 z-40">
             <h1 class="text-3xl md:text-5xl lg:text-7xl font-serif text-[#d7ccc8] tracking-[0.2em] mb-6 drop-shadow-lg text-center px-4">
@@ -158,11 +133,68 @@
             const videoScreen = document.getElementById('video-screen');
             const successVideo = document.getElementById('success-video');
 
-            loginBtn.addEventListener('click', () => {
-                const passValue = passwordInput.value.trim();
+            let realPassword = ""; // Ekranda maskelense bile gerçek şifreyi burada tutacağız
 
-                // Eğer şifre yanlışsa veya boşsa titreme efekti ver
-                if (passValue !== "27252215124") {
+            // Özel Şifre Maskeleme Mantığı (Son harfi gösterip sonradan sansürleme)
+            passwordInput.addEventListener('input', function(e) {
+                let val = this.value;
+                let newPass = "";
+                let j = 0;
+                
+                // Sansür karakterini (•) ve yeni yazılanları ayırarak arkadaki gerçek şifreyi hesapla
+                for (let i = 0; i < val.length; i++) {
+                    if (val[i] === '•') {
+                        if (j < realPassword.length) {
+                            newPass += realPassword[j];
+                            j++;
+                        }
+                    } else {
+                        newPass += val[i];
+                    }
+                }
+                realPassword = newPass;
+
+                // Kullanıcı silme tuşuna (backspace) bastıysa harfi gösterme, direkt hepsini maskele
+                let isDelete = e.inputType && e.inputType.startsWith('delete');
+                
+                let displayStr = "";
+                for (let i = 0; i < realPassword.length; i++) {
+                    // Sadece yeni yazılan EN SON harfi açık bırak
+                    if (i === realPassword.length - 1 && !isDelete) {
+                        displayStr += realPassword[i];
+                    } else {
+                        displayStr += "•";
+                    }
+                }
+                
+                this.value = displayStr;
+                
+                // 600 milisaniye (0.6 sn) sonra son harfi de kapat
+                clearTimeout(this.maskTimeout);
+                if (!isDelete && realPassword.length > 0) {
+                    this.maskTimeout = setTimeout(() => {
+                        let fullyMasked = "";
+                        for (let i = 0; i < realPassword.length; i++) {
+                            fullyMasked += "•";
+                        }
+                        this.value = fullyMasked;
+                    }, 600);
+                }
+            });
+
+            // Kullanıcının imleci şifrenin ortasına alıp yazmasını engelle (mantığı bozmaması için hep sona atar)
+            passwordInput.addEventListener('click', function() {
+                this.selectionStart = this.selectionEnd = this.value.length;
+            });
+            passwordInput.addEventListener('keyup', function(e) {
+                if(e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    this.selectionStart = this.selectionEnd = this.value.length;
+                }
+            });
+
+            loginBtn.addEventListener('click', () => {
+                // Şifreyi kontrol ederken input'taki maskeli noktaları değil, asıl hesapladığımız "realPassword" değerini kullanıyoruz
+                if (realPassword !== "27252215124") {
                     passwordInput.classList.add('shake');
                     setTimeout(() => {
                         passwordInput.classList.remove('shake');
@@ -213,6 +245,5 @@
             });
         });
     </script>
-    
 </body>
 </html>
