@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dedektif Bürosu - 221B</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Siyah ekran çerçevesi: Ekranın neresinde boşluk kalırsa siyahla doldurur */
+        .letterbox {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        /* Resmin tam olarak sığdığı alan. 
+           Yeni dikey resme (image_709800.jpg) uygun olarak 9:16 en-boy oranı sabitlendi.
+           Bu sayede telefon veya bilgisayar fark etmeksizin görsel ASLA kırpılmaz, 
+           butonlar ve şifre kutusu hep doğru yerde kalır.
+        */
+        .scene {
+            position: relative;
+            aspect-ratio: 9 / 16;
+            width: 100%;
+            /* Ekranın dikey ve yatay sınırlarına göre maksimum boyut hesaplaması */
+            max-width: calc(100vh * (9 / 16));
+            max-height: 100vh;
+            background-image: url('image_6fb3081.jpg'); /* Yeni görsel eklendi */
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            container-type: inline-size; /* İçerideki yazı fontlarının resimle birlikte küçülüp büyümesi için */
+        }
+
+        /* Kapıdan içeri girme animasyonu */
+        .entering {
+            /* Merkez noktasına doğru yakınlaş */
+            transform-origin: 50% 50%;
+            animation: enterDoor 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes enterDoor {
+            0% {
+                transform: scale(1);
+                filter: brightness(1) blur(0px);
+            }
+            40% {
+                filter: brightness(1.2) blur(0px); /* Işığa doğru girme hissi */
+            }
+            100% {
+                transform: scale(15); /* Aşırı yakınlaştırma ile kapıdan geçme */
+                filter: brightness(0) blur(4px); /* Karanlığa geçiş */
+            }
+        }
+
+        /* Hatalı (boş) şifre denemesinde titreme efekti */
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+
+        /* Görselin üstüne tam oturtulacak interaktif elemanlar için ortak sınıf */
+        .interactive-el {
+            position: absolute;
+            /* Ortalamayı sağlayan kodlar kaldırıldı, konumlar HTML'de style içinden verilecek */
+            transition: opacity 0.3s ease;
+        }
+
+        /* Resim boyutuna göre esnek font ayarı */
+        .dynamic-text-input { font-size: 3.5cqw; }
+        .dynamic-text-btn { font-size: 2.8cqw; }
+    </style>
+</head>
+<body class="bg-black m-0 p-0 overflow-hidden font-sans">
+
+    <div class="letterbox">
+        <!-- Ana Sahne (Görselin bulunduğu alan) -->
+        <div id="scene" class="scene shadow-[0_0_50px_rgba(0,0,0,0.8)] transition-all duration-1000">
+            
+            <!-- Şifre Kutusu -->
+            <!-- KONUM AYARI: 'top' (yukarıdan) ve 'left' (soldan) yüzdelerini buradan değiştirerek konumunu ayarlayabilirsiniz -->
+            <input type="password" id="password" placeholder="" 
+                   class="interactive-el dynamic-text-input bg-[#c9b596] text-[#3e2723] border-2 border-[#5d4037] rounded-sm px-2 outline-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] font-mono font-bold tracking-widest text-center z-10"
+                   style="top: 46.5%; left: 45%; transform: skewX(3deg); width: 20%; height: 3.2%;"
+                   autocomplete="off">
+            
+            <!-- Giriş Butonu (Resim Kaplamalı) -->
+            <!-- KONUM AYARI: 'top' (yukarıdan), 'left' (soldan), 'width' (genişlik) ve 'height' (yükseklik) değerlerini değiştirebilirsiniz -->
+            <button id="login-btn" 
+                    class="interactive-el cursor-pointer active:scale-95 transition-transform z-10"
+                    style="top: 50.2%; left: 45%; width: 20%; height: 4%; background-image: url('image_717164.png'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; background-color: transparent; border: none; outline: none;"
+                    title="Giriş Yap"
+                    aria-label="Giriş Yap">
+            </button>
+
+        </div>
+
+        <!-- İçeri Girdikten Sonra Karşılaşılacak Ekran (Hoşgeldin Yazısı) -->
+        <div id="welcome-text" class="absolute inset-0 bg-black text-white flex flex-col justify-center items-center opacity-0 pointer-events-none transition-opacity duration-1000 z-40">
+            <h1 class="text-3xl md:text-5xl lg:text-7xl font-serif text-[#d7ccc8] tracking-[0.2em] mb-6 drop-shadow-lg text-center px-4">
+                221B BAKER STREET
+            </h1>
+            <p class="text-lg md:text-2xl text-gray-400 font-light tracking-widest text-center">
+                İçeri Girdiniz. Hoşgeldiniz, Dedektif.
+            </p>
+        </div>
+
+        <!-- Yazıdan Sonra Karşılaşılacak Ekran (Video Alanı) -->
+        <div id="video-screen" class="absolute inset-0 bg-black flex justify-center items-center opacity-0 pointer-events-none transition-opacity duration-1000 z-50">
+            <!-- VİDEO OYNATICI: src="senin_videon.mp4" kısmını oynatmak istediğiniz videonun adıyla değiştirin -->
+            <video id="success-video" class="w-full h-full object-contain outline-none" src="video.mp4" controls playsinline></video>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const loginBtn = document.getElementById('login-btn');
+            const passwordInput = document.getElementById('password');
+            const scene = document.getElementById('scene');
+            const welcomeText = document.getElementById('welcome-text');
+            const videoScreen = document.getElementById('video-screen');
+            const successVideo = document.getElementById('success-video');
+
+            loginBtn.addEventListener('click', () => {
+                const passValue = passwordInput.value.trim();
+
+                // Eğer şifre alanı boşsa titreme efekti ver
+                if (passValue === "") {
+                    passwordInput.classList.add('shake');
+                    setTimeout(() => {
+                        passwordInput.classList.remove('shake');
+                    }, 400);
+                    return;
+                }
+
+                // Şifre girildiyse animasyonu başlat
+                // 1. Zoom yaparken elementlerin formunu bozmaması için giriş alanlarını gizle
+                passwordInput.style.opacity = '0';
+                loginBtn.style.opacity = '0';
+                passwordInput.style.pointerEvents = 'none';
+                loginBtn.style.pointerEvents = 'none';
+
+                // 2. Sahneye (görsele) kapıdan girme animasyonunu ekle
+                scene.classList.add('entering');
+
+                // 3. Animasyon bittiğinde (yaklaşık 2.5 saniye sonra) karşılama yazısını göster
+                setTimeout(() => {
+                    welcomeText.classList.remove('opacity-0', 'pointer-events-none');
+                    welcomeText.classList.add('opacity-100');
+                    
+                    // 4. Yazı çıktıktan tam 4 saniye sonra yazıyı gizle ve videoyu oynat
+                    setTimeout(() => {
+                        // Yazıyı şeffaflaştır
+                        welcomeText.classList.remove('opacity-100');
+                        welcomeText.classList.add('opacity-0');
+                        
+                        // Video ekranını göster
+                        videoScreen.classList.remove('opacity-0', 'pointer-events-none');
+                        videoScreen.classList.add('opacity-100');
+
+                        // Videoyu otomatik başlat
+                        successVideo.play().catch(error => {
+                            console.log("Video otomatik oynatılamadı:", error);
+                        });
+                    }, 4000); // 4 Saniye (4000 ms)
+                    
+                }, 2500); // Zoom animasyon süresi
+            });
+
+            // "Enter" tuşuna basıldığında da buton tetiklensin
+            passwordInput.addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    loginBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
