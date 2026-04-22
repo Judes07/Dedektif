@@ -135,8 +135,8 @@
             loginBtn.addEventListener('click', () => {
                 const passValue = passwordInput.value.trim();
 
-                // Eğer şifre alanı boşsa titreme efekti ver
-                if (passValue === "") {
+                // Eğer şifre yanlışsa veya boşsa titreme efekti ver
+                if (passValue !== "27252215124") {
                     passwordInput.classList.add('shake');
                     setTimeout(() => {
                         passwordInput.classList.remove('shake');
@@ -144,7 +144,7 @@
                     return;
                 }
 
-                // Şifre girildiyse animasyonu başlat
+                // Şifre DOĞRU girildiyse animasyonu başlat
                 // 1. Zoom yaparken elementlerin formunu bozmaması için giriş alanlarını gizle
                 passwordInput.style.opacity = '0';
                 loginBtn.style.opacity = '0';
@@ -187,5 +187,6 @@
             });
         });
     </script>
+    
 </body>
 </html>
